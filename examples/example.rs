@@ -38,7 +38,7 @@ async fn main() {
             info!("The shared state is locked and safe to access.");
         }
 
-        info!("The program will now exit, releasing all locks if any remain.");
+        info!("The program will now exit.");
     }
 
     let _ = logger.await;
