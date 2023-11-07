@@ -34,7 +34,7 @@ async fn main() {
         do_work(&mutex);
 
         {
-            let _guard = mutex.lock();
+            let _state = mutex.lock().unwrap();
             info!("The shared state is locked and safe to access.");
         }
 
@@ -46,7 +46,7 @@ async fn main() {
 
 #[tracing::instrument(skip_all)]
 fn do_work(mutex: &TracingMutexSpan<SharedState>) {
-    let mut state = mutex.lock().unwrap();
+    let state = mutex.lock().unwrap();
     state.x += 2;
     info!("Locked and performing work, x={}", state.x);
 }
