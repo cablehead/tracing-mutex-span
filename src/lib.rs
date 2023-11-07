@@ -1,13 +1,14 @@
 use std::sync::{Mutex, MutexGuard};
+
 use tracing::{info_span, Span};
 
-pub struct TracingMutex<T> {
+pub struct TracingMutexSpan<T> {
     inner: Mutex<T>,
 }
 
-impl<T> TracingMutex<T> {
+impl<T> TracingMutexSpan<T> {
     pub fn new(data: T) -> Self {
-        TracingMutex {
+        TracingMutexSpan {
             inner: Mutex::new(data),
         }
     }

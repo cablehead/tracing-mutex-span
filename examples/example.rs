@@ -6,7 +6,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use tracing_stacks::{fmt::write_entry, RootSpanLayer};
 
-use tracing_mutex_span::TracingMutex;
+use tracing_mutex_span::TracingMutexSpan;
 
 struct SharedState {}
 
@@ -28,7 +28,7 @@ async fn main() {
 
         tracing::info!("let's go!");
 
-        let mutex = TracingMutex::new(SharedState {});
+        let mutex = TracingMutexSpan::new(SharedState {});
 
         do_work(&mutex);
 
@@ -44,7 +44,7 @@ async fn main() {
 }
 
 #[tracing::instrument(skip_all)]
-fn do_work(mutex: &TracingMutex<SharedState>) {
+fn do_work(mutex: &TracingMutexSpan<SharedState>) {
     let _guard = mutex.lock();
     info!("Locked and performing work on the shared state.");
 }
