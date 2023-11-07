@@ -28,7 +28,7 @@ async fn main() {
 
         tracing::info!("let's go!");
 
-        let mutex = TracingMutexSpan::new(SharedState {});
+        let mutex = TracingMutexSpan::new("SharedState", SharedState {});
 
         do_work(&mutex);
         do_work(&mutex);
