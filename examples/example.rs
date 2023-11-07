@@ -1,39 +1,50 @@
-// examples/example.rs
-use tracing::{info, Level};
-use tracing_subscriber::FmtSubscriber;
-use tracing_mutex_span::TracingMutex; // Make sure to use the actual name of your crate here.
+use tokio::sync::broadcast;
 
-struct SharedState {
-    data: u64,
-}
+use tracing::info;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
-fn main() {
-    // Set up the subscriber for tracing events.
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .finish();
+use tracing_stacks::{fmt::write_entry, RootSpanLayer};
 
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+use tracing_mutex_span::TracingMutex;
 
-    // Create a `TracingMutex` to protect the `SharedState`.
-    let mutex = TracingMutex::new(SharedState { data: 42 });
+struct SharedState {}
 
-    // Simulate doing some work with the locked state.
-    do_work(&mutex);
+#[tokio::main]
+async fn main() {
+    let (tx, mut rx) = broadcast::channel(16);
 
-    // Simulate more work in a separate scope, causing the lock to be acquired and released again.
+    let logger = tokio::spawn(async move {
+        let mut stdout = std::io::stdout();
+        while let Ok(entry) = rx.recv().await {
+            write_entry(&mut stdout, &entry, 0).unwrap();
+        }
+    });
+
     {
-        let _guard = mutex.lock();
-        info!("The shared state is locked and safe to access.");
-        // Perform operations on the locked state here...
-    } // The lock is automatically released here.
+        let _subscriber = tracing_subscriber::Registry::default()
+            .with(RootSpanLayer::new(tx, None))
+            .set_default();
 
-    info!("The program will now exit, releasing all locks if any remain.");
+        tracing::info!("let's go!");
+
+        let mutex = TracingMutex::new(SharedState {});
+
+        do_work(&mutex);
+
+        {
+            let _guard = mutex.lock();
+            info!("The shared state is locked and safe to access.");
+        }
+
+        info!("The program will now exit, releasing all locks if any remain.");
+    }
+
+    let _ = logger.await;
 }
 
-// A function that takes a `TracingMutex` and performs some work while the lock is held.
+#[tracing::instrument(skip_all)]
 fn do_work(mutex: &TracingMutex<SharedState>) {
     let _guard = mutex.lock();
     info!("Locked and performing work on the shared state.");
-    // Perform some work with the locked state here...
-} // The lock is automatically released when `_guard` goes out of scope.
+}

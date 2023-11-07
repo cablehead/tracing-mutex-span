@@ -10,3 +10,5 @@ tracing = "0.1.40"
 
 [dev-dependencies]
 tracing-subscriber = "0.3.17"
+tokio = { version = "1.28.2", features = ["full"] }
+tracing_stacks = { git = "https://github.com/cablehead/tracing-stacks.git", branch = "main" }
