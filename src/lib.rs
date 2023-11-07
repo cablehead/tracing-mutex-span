@@ -33,6 +33,12 @@ pub struct TracingGuard<'a, T> {
     _guard: MutexGuard<'a, T>,
 }
 
+impl<'a, T> TracingGuard<'a, T> {
+    pub fn get_mut(&mut self) -> &mut T {
+        &mut *(self._guard)
+    }
+}
+
 impl<'a, T> Drop for TracingGuard<'a, T> {
     fn drop(&mut self) {
         trace!("{} unlocked", self.name);
