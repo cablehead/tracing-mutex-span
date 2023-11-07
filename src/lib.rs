@@ -33,14 +33,24 @@ pub struct TracingGuard<'a, T> {
     _guard: MutexGuard<'a, T>,
 }
 
-impl<'a, T> TracingGuard<'a, T> {
-    pub fn get_mut(&mut self) -> &mut T {
-        &mut *(self._guard)
-    }
-}
-
 impl<'a, T> Drop for TracingGuard<'a, T> {
     fn drop(&mut self) {
         trace!("{} unlocked", self.name);
+    }
+}
+
+use std::ops::{Deref, DerefMut};
+
+impl<'a, T> Deref for TracingGuard<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self._guard
+    }
+}
+
+impl<'a, T> DerefMut for TracingGuard<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self._guard
     }
 }

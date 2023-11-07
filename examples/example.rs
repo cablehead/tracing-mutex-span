@@ -1,6 +1,5 @@
 use tokio::sync::broadcast;
 
-use tracing::info;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -8,7 +7,9 @@ use tracing_stacks::{fmt::write_entry, RootSpanLayer};
 
 use tracing_mutex_span::TracingMutexSpan;
 
-struct SharedState {x: u64}
+struct SharedState {
+    x: u64,
+}
 
 #[tokio::main]
 async fn main() {
@@ -28,17 +29,17 @@ async fn main() {
 
         tracing::info!("let's go!");
 
-        let mutex = TracingMutexSpan::new("SharedState", SharedState {x:0});
+        let mutex = TracingMutexSpan::new("SharedState", SharedState { x: 0 });
 
         do_work(&mutex);
         do_work(&mutex);
 
         {
             let _state = mutex.lock().unwrap();
-            info!("The shared state is locked and safe to access.");
+            tracing::info!("The shared state is locked and safe to access.");
         }
 
-        info!("The program will now exit.");
+        tracing::info!("The program will now exit.");
     }
 
     let _ = logger.await;
@@ -46,7 +47,7 @@ async fn main() {
 
 #[tracing::instrument(skip_all)]
 fn do_work(mutex: &TracingMutexSpan<SharedState>) {
-    let state = mutex.lock().unwrap();
+    let mut state = mutex.lock().unwrap();
     state.x += 2;
-    info!("Locked and performing work, x={}", state.x);
+    tracing::info!(x = state.x, "Locked and performing work");
 }
