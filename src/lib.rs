@@ -1,8 +1,6 @@
 use std::sync::{Mutex, MutexGuard};
-use tracing::{info_span, span::Entered};
-use tracing::Span;
+use tracing::{info_span, Span};
 
-// Define your TracingMutex struct here
 pub struct TracingMutex<T> {
     inner: Mutex<T>,
 }
@@ -16,24 +14,41 @@ impl<T> TracingMutex<T> {
 
     pub fn lock(&self) -> TracingGuard<'_, T> {
         let span = info_span!("lock_acquired");
-        let enter = span.enter();
-
-        let guard = self.inner.lock().expect("Failed to acquire lock");
-
-        // Store both the span and the Entered guard directly
-        TracingGuard { guard, _enter: enter, _span: span }
+        let _guard = self.inner.lock().expect("Failed to acquire lock");
+        span.in_scope(|| {}); // This is just to register the span
+        TracingGuard {
+            guard: _guard,
+            span, // Move span into TracingGuard
+        }
     }
 }
 
-// Updated definition of TracingGuard to include the span
 pub struct TracingGuard<'a, T> {
     guard: MutexGuard<'a, T>,
-    _enter: Entered<'a>, // This will be the Entered guard, store it directly
-    _span: Span, // Also store the span to extend its lifetime
+    span: Span, // Store the span itself
 }
 
 impl<'a, T> Drop for TracingGuard<'a, T> {
     fn drop(&mut self) {
-        // The span is exited automatically when _enter is dropped
+        self.span.in_scope(|| {
+            tracing::info!("lock_released"); // Log that the lock has been released
+        });
+        // Exiting the scope will automatically exit the span
+    }
+}
+
+use std::ops::{Deref, DerefMut};
+
+impl<'a, T> Deref for TracingGuard<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.guard
+    }
+}
+
+impl<'a, T> DerefMut for TracingGuard<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.guard
     }
 }
