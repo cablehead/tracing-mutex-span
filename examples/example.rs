@@ -8,7 +8,7 @@ use tracing_stacks::{fmt::write_entry, RootSpanLayer};
 
 use tracing_mutex_span::TracingMutexSpan;
 
-struct SharedState {}
+struct SharedState {x: u64}
 
 #[tokio::main]
 async fn main() {
@@ -28,7 +28,7 @@ async fn main() {
 
         tracing::info!("let's go!");
 
-        let mutex = TracingMutexSpan::new("SharedState", SharedState {});
+        let mutex = TracingMutexSpan::new("SharedState", SharedState {x:0});
 
         do_work(&mutex);
         do_work(&mutex);
@@ -46,6 +46,7 @@ async fn main() {
 
 #[tracing::instrument(skip_all)]
 fn do_work(mutex: &TracingMutexSpan<SharedState>) {
-    let _guard = mutex.lock();
-    info!("Locked and performing work on the shared state.");
+    let state = mutex.lock();
+    state.x += 2;
+    info!("Locked and performing work, x={}", state.x);
 }
