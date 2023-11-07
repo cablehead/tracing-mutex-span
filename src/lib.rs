@@ -16,25 +16,24 @@ impl<T> TracingMutexSpan<T> {
     pub fn lock(&self) -> TracingGuard<'_, T> {
         let span = info_span!("lock_acquired");
         let _guard = self.inner.lock().expect("Failed to acquire lock");
-        span.in_scope(|| {}); // This is just to register the span
+        span.in_scope(|| {});
         TracingGuard {
             guard: _guard,
-            span, // Move span into TracingGuard
+            span,
         }
     }
 }
 
 pub struct TracingGuard<'a, T> {
     guard: MutexGuard<'a, T>,
-    span: Span, // Store the span itself
+    span: Span,
 }
 
 impl<'a, T> Drop for TracingGuard<'a, T> {
     fn drop(&mut self) {
         self.span.in_scope(|| {
-            tracing::info!("lock_released"); // Log that the lock has been released
+            // tracing::info!("lock_released"); // Log that the lock has been released
         });
-        // Exiting the scope will automatically exit the span
     }
 }
 

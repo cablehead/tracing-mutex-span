@@ -31,6 +31,7 @@ async fn main() {
         let mutex = TracingMutexSpan::new(SharedState {});
 
         do_work(&mutex);
+        do_work(&mutex);
 
         {
             let _guard = mutex.lock();
