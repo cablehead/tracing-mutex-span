@@ -17,7 +17,7 @@ async fn main() {
     let logger = tokio::spawn(async move {
         let mut stdout = std::io::stdout();
         while let Ok(entry) = rx.recv().await {
-            write_entry(&mut stdout, &entry, 0).unwrap();
+            write_entry(&mut stdout, &entry).unwrap();
         }
     });
 
