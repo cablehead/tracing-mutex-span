@@ -46,7 +46,7 @@ async fn main() {
 
 #[tracing::instrument(skip_all)]
 fn do_work(mutex: &TracingMutexSpan<SharedState>) {
-    let state = mutex.lock();
+    let mut state = mutex.lock().unwrap();
     state.x += 2;
     info!("Locked and performing work, x={}", state.x);
 }
