@@ -15,12 +15,16 @@ impl<T> TracingMutexSpan<T> {
         }
     }
 
-    pub fn lock(&self) -> TracingGuard<'_, T> {
-        trace!("{} locked", self.name);
-        TracingGuard {
-            name: self.name.clone(),
-            _guard: self.inner.lock().expect("Failed to acquire lock"),
-        }
+    pub fn lock(
+        &self,
+    ) -> Result<TracingGuard<'_, T>, std::sync::TryLockError<std::sync::MutexGuard<'_, T>>> {
+        self.inner.try_lock().map(|guard| {
+            trace!("{} locked", self.name);
+            TracingGuard {
+                name: self.name.clone(),
+                _guard: guard,
+            }
+        })
     }
 }
 
