@@ -16,7 +16,7 @@ impl<T> TracingMutexSpan<T> {
     }
 
     pub fn lock(&self) -> TracingGuard<'_, T> {
-        let guard = self.inner.lock().unwrap();
+        let guard = self.inner.lock()?;
         trace!("{} locked", self.name);
         TracingGuard {
             name: self.name.clone(),
