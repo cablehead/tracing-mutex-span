@@ -15,13 +15,13 @@ impl<T> TracingMutexSpan<T> {
         }
     }
 
-    pub fn lock(&self) -> TracingGuard<'_, T> {
+    pub fn lock(&self) -> Result<TracingGuard<'_, T>, std::sync::PoisonError<std::sync::MutexGuard<'_, T>>> {
         let guard = self.inner.lock()?;
         trace!("{} locked", self.name);
-        TracingGuard {
+        Ok(TracingGuard {
             name: self.name.clone(),
             _guard: guard,
-        }
+        })
     }
 }
 
