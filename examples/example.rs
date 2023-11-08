@@ -35,8 +35,10 @@ async fn main() {
         do_work(&mutex);
 
         {
-            let _state = mutex.lock().unwrap();
-            tracing::info!("The shared state is locked and safe to access.");
+            mutex.with_lock(|state| {
+                state.x += 2;
+                tracing::info!(x = state.x, "Locked and performing work");
+            });
         }
 
         tracing::info!("The program will now exit.");
@@ -47,7 +49,9 @@ async fn main() {
 
 #[tracing::instrument(skip_all)]
 fn do_work(mutex: &TracingMutexSpan<SharedState>) {
-    let mut state = mutex.lock().unwrap();
-    state.x += 2;
-    tracing::info!(x = state.x, "Locked and performing work");
+    mutex.with_lock(|state| {
+        state.x += 2;
+        std::thread::sleep(std::time::Duration::from_millis(1));
+        tracing::info!(x = state.x, "Locked and performing work");
+    });
 }

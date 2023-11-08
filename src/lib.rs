@@ -15,13 +15,14 @@ impl<T> TracingMutexSpan<T> {
         }
     }
 
-    pub fn lock(&self) -> Result<TracingGuard<'_, T>, std::sync::PoisonError<std::sync::MutexGuard<'_, T>>> {
-        let guard = self.inner.lock()?;
-        trace!("{} locked", self.name);
-        Ok(TracingGuard {
-            name: self.name.clone(),
-            _guard: guard,
-        })
+    pub fn with_lock<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut T) -> R,
+    {
+        let mut guard = self.inner.lock().unwrap();
+        let child_span = tracing::info_span!("lock", name = %self.name);
+
+        child_span.in_scope(|| f(&mut *guard))
     }
 }
 
